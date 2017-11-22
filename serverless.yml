@@ -14,6 +14,8 @@ functions:
     handler: app.addNumber
   subNumber:
     handler: app.subNumber
+  fibonacci:
+    handler: app.fibonacci
 
 stepFunctions:
   stateMachines:
@@ -92,6 +94,27 @@ stepFunctions:
           FinalState:
             Type: Pass
             End: true
+    fibonacciDemo:
+      name: fibonacciDemo
+      definition:
+        Comment: "Fibonacchi Number Generator"
+        StartAt: EntryPoint
+        States:
+          EntryPoint:
+            Type: Choice
+            Choices:
+            - Variable: "$.num"
+              NumericEquals: 0
+              Next: OutputResult
+            Default: GenerateNext
+          OutputResult:
+            Type: Pass
+            OutputPath: "$.n2"
+            End: true
+          GenerateNext:
+            Type: Task
+            Resource: arn:aws:lambda:#{AWS::Region}:#{AWS::AccountId}:function:${self:service}-${opt:stage}-fibonacci
+            Next: EntryPoint
 plugins:
   - serverless-step-functions
   - serverless-pseudo-parameters
