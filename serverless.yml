@@ -12,6 +12,8 @@ provider:
 functions:
   addNumber:
     handler: app.addNumber
+  subNumber:
+    handler: app.subNumber
 
 stepFunctions:
   stateMachines:
@@ -35,7 +37,61 @@ stepFunctions:
             Type: Wait
             Seconds: 10
             End: true
-
+    choiceDemo:
+      name: choiceDemo
+      definition:
+        Comment: "An choice demo"
+        StartAt: EntryPoint
+        States:
+          EntryPoint:
+            Type: Task
+            Resource: arn:aws:lambda:#{AWS::Region}:#{AWS::AccountId}:function:${self:service}-${opt:stage}-addNumber
+            ResultPath: "$.sum"
+            Next: ChoiceState
+          ChoiceState:
+            Type: Choice
+            Choices:
+            - Variable: "$.sum"
+              NumericEquals: 1
+              Next: Pass1State
+            Default: DefaultState
+          Pass1State:
+            Type: Pass
+            Result:
+              debug: "pass1 state"
+            ResultPath: "$.debug"
+            End: true
+          DefaultState:
+            Type: Pass
+            Result:
+              debug: "default state"
+            ResultPath: "$.debug"
+            End: true
+    parallelDemo:
+      name: parallelDemo
+      definition:
+        Comment: "An parallel demo"
+        StartAt: Parallel
+        States:
+          Parallel:
+            Type: Parallel
+            Next: FinalState
+            Branches:
+            - StartAt: Add
+              States:
+                Add:
+                  Type: Task
+                  Resource: arn:aws:lambda:#{AWS::Region}:#{AWS::AccountId}:function:${self:service}-${opt:stage}-addNumber
+                  End: true
+            - StartAt: Sub
+              States:
+                Sub:
+                  Type: Task
+                  Resource: arn:aws:lambda:#{AWS::Region}:#{AWS::AccountId}:function:${self:service}-${opt:stage}-subNumber
+                  End: true
+          FinalState:
+            Type: Pass
+            End: true
 plugins:
   - serverless-step-functions
   - serverless-pseudo-parameters
